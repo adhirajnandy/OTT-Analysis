@@ -27,8 +27,13 @@ class Neo4jConnection:
             return [dict(record) for record in result]
 
 def main():
-    st.set_page_config(page_title="Netflix Graph Analysis", layout="wide")
-    st.title("Netflix Content Analysis Dashboard")
+    st.set_page_config(
+        page_title="Netflix Analysis Dashboard",
+        page_icon="🎬",
+        layout="wide"
+    )
+    
+    st.title("🎬 Netflix Content Analysis Dashboard")
     
     # Initialize Neo4j connection
     neo4j = Neo4jConnection()
@@ -76,16 +81,6 @@ def main():
     with col3:
         director_count = counts_df[counts_df['type'] == 'Director']['count'].iloc[0]
         st.metric("Total Directors", director_count)
-    
-    # Custom query section
-    st.sidebar.header("Custom Query")
-    custom_query = st.sidebar.text_area("Enter your Cypher query")
-    if st.sidebar.button("Run Query"):
-        try:
-            results = neo4j.query(custom_query)
-            st.sidebar.dataframe(pd.DataFrame(results))
-        except Exception as e:
-            st.sidebar.error(f"Error executing query: {str(e)}")
     
     # Close Neo4j connection
     neo4j.close()

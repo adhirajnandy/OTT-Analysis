@@ -60,10 +60,23 @@ def main():
     LIMIT 10
     """
     combo_data = neo4j.query(combo_query)
-    combo_df = pd.DataFrame(combo_data)
+    
+    # Process the data for sunburst chart
+    processed_data = []
+    for record in combo_data:
+        genres = record['genres']
+        count = record['count']
+        # Create a path string from the genres list
+        path = ' > '.join(genres)
+        processed_data.append({
+            'path': path,
+            'count': count
+        })
+    
+    combo_df = pd.DataFrame(processed_data)
     
     # Create sunburst chart
-    fig = px.sunburst(combo_df, path=['genres'], values='count',
+    fig = px.sunburst(combo_df, path=['path'], values='count',
                       title='Genre Combinations (Sunburst)')
     st.plotly_chart(fig, use_container_width=True)
     
