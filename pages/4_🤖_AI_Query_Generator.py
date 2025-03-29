@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 import google.generativeai as genai
 from datetime import datetime
 import re
-import plotly.express as px
 
 # Load environment variables
 load_dotenv()
@@ -52,51 +51,26 @@ def clean_cypher_query(query):
 
 def generate_cypher_query(user_input):
     prompt = f"""
-    You are a Neo4j Cypher query expert. Convert the following natural language question into a Cypher query.
-    The query should be efficient and follow Neo4j best practices.
+    Convert this natural language query to a Cypher query for Neo4j:
+    "{user_input}"
     
-    Question: "{user_input}"
+    The database schema is:
+    - Nodes: Movie, TVShow, Director, Actor, Country, Genre
+    - Relationships: 
+      - (Actor)-[:ACTED_IN]->(Movie/TVShow)
+      - (Director)-[:DIRECTED]->(Movie/TVShow)
+      - (Movie/TVShow)-[:RELEASED_IN]->(Country)
+      - (Movie/TVShow)-[:BELONGS_TO_GENRE]->(Genre)
     
-    Database Schema:
-    Nodes:
-    - Movie: {{title, release_year, rating, duration}}
-    - TVShow: {{title, release_year, rating, duration}}
-    - Director: {{name}}
-    - Actor: {{name}}
-    - Country: {{name}}
-    - Genre: {{name}}
-    
-    Relationships:
-    - (Actor)-[:ACTED_IN]->(Movie/TVShow)
-    - (Director)-[:DIRECTED]->(Movie/TVShow)
-    - (Movie/TVShow)-[:RELEASED_IN]->(Country)
-    - (Movie/TVShow)-[:BELONGS_TO_GENRE]->(Genre)
-    
-    Important Rules:
-    1. Return ONLY the Cypher query without any explanation or markdown formatting
-    2. Use parameterized queries where appropriate
-    3. Include LIMIT clauses to prevent large result sets
-    4. Use proper indexing hints when possible
-    5. Include ORDER BY clauses for better readability
-    6. Use meaningful variable names
-    
-    Example:
-    Question: "Show me all movies directed by Christopher Nolan"
-    Response: MATCH (d:Director {{name: 'Christopher Nolan'}})-[:DIRECTED]->(m:Movie) RETURN m.title as title, m.release_year as year, m.rating as rating ORDER BY m.release_year DESC LIMIT 10
-    
-    Now, generate the Cypher query for the given question:
+    Return only the Cypher query without any explanation or markdown formatting.
     """
     
     try:
         response = model.generate_content(prompt)
         if response.text:
-            query = clean_cypher_query(response.text)
-            # Basic validation
-            if not query.startswith("MATCH"):
-                return "MATCH (m:Movie) RETURN m LIMIT 5"  # Fallback query
-            return query
+            return clean_cypher_query(response.text)
         else:
-            return "MATCH (m:Movie) RETURN m LIMIT 5"  # Fallback query
+            return "Error: No response generated"
     except Exception as e:
         st.error(f"Error with Gemini API: {str(e)}")
         return "MATCH (m:Movie) RETURN m LIMIT 5"  # Fallback query
@@ -107,10 +81,10 @@ def execute_query(cypher_query, neo4j):
         if results:
             return pd.DataFrame(results)
         else:
-            return pd.DataFrame()  # Return empty DataFrame instead of None
+            return None
     except Exception as e:
         st.error(f"Error executing query: {str(e)}")
-        return pd.DataFrame()  # Return empty DataFrame instead of None
+        return None
 
 def main():
     st.title("🤖 AI Query Generator")
@@ -132,7 +106,7 @@ def main():
     if 'generated_query' not in st.session_state:
         st.session_state.generated_query = ""
     if 'query_results' not in st.session_state:
-        st.session_state.query_results = pd.DataFrame()
+        st.session_state.query_results = None
     
     # Example queries
     st.sidebar.header("Example Queries")
@@ -141,12 +115,7 @@ def main():
         "Find actors who worked with Tom Cruise",
         "List all action movies released in 2020",
         "Show me the most popular genres in India",
-        "Find directors who worked with multiple actors",
-        "What are the highest rated movies from 2023?",
-        "Show me movies that combine Action and Drama genres",
-        "Which actors have worked with the most directors?",
-        "What are the most common genre combinations?",
-        "Find movies released in multiple countries"
+        "Find directors who worked with multiple actors"
     ]
     
     for query in example_queries:
@@ -163,7 +132,7 @@ def main():
             with st.spinner("Generating Cypher query..."):
                 # Generate Cypher query
                 st.session_state.generated_query = generate_cypher_query(user_query)
-                st.session_state.query_results = pd.DataFrame()  # Reset results
+                st.session_state.query_results = None  # Reset results
     
     # Display and edit generated query
     if st.session_state.generated_query:
@@ -180,19 +149,9 @@ def main():
                 st.session_state.query_results = execute_query(st.session_state.generated_query, neo4j)
     
     # Display results
-    if not st.session_state.query_results.empty:
+    if st.session_state.query_results is not None:
         st.subheader("Results:")
         st.dataframe(st.session_state.query_results)
-        
-        # Try to create a visualization if possible
-        if len(st.session_state.query_results.columns) >= 2:
-            try:
-                fig = px.bar(st.session_state.query_results, 
-                           x=st.session_state.query_results.columns[0],
-                           y=st.session_state.query_results.columns[1])
-                st.plotly_chart(fig, use_container_width=True)
-            except:
-                pass
     
     # Schema information
     with st.expander("View Database Schema"):
