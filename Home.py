@@ -85,6 +85,65 @@ def main():
     content_type_condition = " OR ".join([f"m:{'TVShow' if content == 'TV Show' else content}" for content in content_type]) if content_type else "m:Movie OR m:TVShow"
     genre_condition = " AND ".join([f"g.name = '{genre}'" for genre in selected_genres]) if selected_genres else "true"
     
+    # Display Filtered Records
+    st.header("Filtered Content")
+    
+    # Add a search box for the filtered content
+    search_term = st.text_input("Search in filtered content", "")
+    
+    # Modify the filtered query to include search
+    filtered_query = f"""
+    MATCH (m)
+    WHERE ({content_type_condition})
+    AND m.release_year >= {year_range[0]}
+    AND m.release_year <= {year_range[1]}
+    MATCH (m)-[:BELONGS_TO_GENRE]->(g:Genre)
+    WHERE {genre_condition}
+    AND (
+        CASE 
+            WHEN $search_term IS NOT NULL AND $search_term <> '' 
+            THEN toLower(m.title) CONTAINS toLower($search_term)
+            OR toLower(g.name) CONTAINS toLower($search_term)
+            ELSE true 
+        END
+    )
+    WITH DISTINCT m, collect(g.name) as genres
+    RETURN 
+        m.title as title,
+        CASE WHEN m:Movie THEN 'Movie' ELSE 'TV Show' END as type,
+        m.release_year as release_year,
+        genres,
+        m.rating as rating,
+        m.duration as duration
+    ORDER BY m.release_year DESC
+    LIMIT 100
+    """
+    
+    filtered_df = pd.DataFrame(neo4j.query(filtered_query, params={"search_term": search_term}))
+    
+    if not filtered_df.empty:
+        # Convert genres list to string
+        filtered_df['genres'] = filtered_df['genres'].apply(lambda x: ', '.join(x))
+        
+        # Display the filtered content in a table
+        st.dataframe(
+            filtered_df,
+            column_config={
+                "title": "Title",
+                "type": "Type",
+                "release_year": "Release Year",
+                "genres": "Genres",
+                "rating": "Rating",
+                "duration": "Duration"
+            },
+            hide_index=True
+        )
+        
+        # Show total count of filtered records
+        st.info(f"Showing {len(filtered_df)} records (limited to 100)")
+    else:
+        st.info("No content found for the selected filters.")
+    
     # Quick Stats
     st.header("Quick Statistics")
     
