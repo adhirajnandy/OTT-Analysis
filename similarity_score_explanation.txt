@@ -1,0 +1,87 @@
+Movie Recommendation System - Similarity Score Calculation
+=======================================================
+
+The similarity score is calculated using multiple factors, each with different weights to determine how similar two movies are. Here's a detailed breakdown of the calculation:
+
+1. Genre Score (Weight: 2.0)
+----------------------------
+- Counts how many genres the movies share
+- Each matching genre adds 2 points
+- Example: If two movies share 3 genres, genre_score = 6
+
+Cypher Query Part:
+```cypher
+genre_matches * 2 as genre_score
+```
+
+2. Actor Score (Weight: 1.5)
+---------------------------
+- Counts how many actors appear in both movies
+- Each matching actor adds 1.5 points
+- Example: If two movies share 2 actors, actor_score = 3
+
+Cypher Query Part:
+```cypher
+actor_matches * 1.5 as actor_score
+```
+
+3. Director Score (Weight: 1.5)
+------------------------------
+- Counts how many directors worked on both movies
+- Each matching director adds 1.5 points
+- Example: If two movies share 1 director, director_score = 1.5
+
+Cypher Query Part:
+```cypher
+director_matches * 1.5 as director_score
+```
+
+Total Score Calculation
+----------------------
+The final total score is calculated by adding all these components:
+
+```cypher
+WITH similar,
+     genre_score + actor_score + director_score as total_score
+```
+
+Example Calculation:
+-------------------
+Movie A and Movie B share:
+- 3 genres (3 * 2 = 6 points)
+- 2 actors (2 * 1.5 = 3 points)
+- 1 director (1 * 1.5 = 1.5 points)
+
+Total Similarity Score = 6 + 3 + 1.5 = 10.5
+
+Weight Selection Rationale
+-------------------------
+The weights were chosen to prioritize different aspects of movie similarity:
+
+1. Genres (2.0)
+   - Highest weight because genres define the movie's category
+   - Most important factor in determining movie similarity
+   - Helps match movies of the same type/style
+
+2. Actors/Directors (1.5)
+   - Second highest weight
+   - Important for matching movies with similar creative teams
+   - Helps identify movies with similar production styles
+
+Results Ordering
+---------------
+The results are ordered by the total score in descending order:
+
+```cypher
+ORDER BY total_score DESC
+LIMIT 10
+```
+
+This ensures that:
+- The most similar movies (highest total score) appear first
+- Users get the top 10 most relevant recommendations
+- Recommendations are based on multiple factors, not just one aspect
+
+Note: The weights can be adjusted based on user feedback or specific requirements. For example:
+- Increasing genre weight would make genre matching more important
+- Increasing actor/director weight would prioritize movies with the same creative team 

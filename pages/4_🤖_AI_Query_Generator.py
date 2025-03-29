@@ -113,9 +113,11 @@ def main():
     example_queries = [
         "Show me all movies directed by Christopher Nolan",
         "Find actors who worked with Tom Cruise",
-        "List all action movies released in 2020",
-        "Show me the most popular genres in India",
-        "Find directors who worked with multiple actors"
+
+        "Find directors who worked with multiple actors",
+        "What are the most common genre combinations?",
+        "Find movies released in multiple countries"
+
     ]
     
     for query in example_queries:
@@ -151,7 +153,20 @@ def main():
     # Display results
     if st.session_state.query_results is not None:
         st.subheader("Results:")
-        st.dataframe(st.session_state.query_results)
+        if st.session_state.query_results.empty:
+            st.warning("No records found for this query. Try modifying your question or using a different example query.")
+        else:
+            st.dataframe(st.session_state.query_results)
+        
+        # Try to create a visualization if possible
+        if len(st.session_state.query_results.columns) >= 2:
+            try:
+                fig = px.bar(st.session_state.query_results, 
+                           x=st.session_state.query_results.columns[0],
+                           y=st.session_state.query_results.columns[1])
+                st.plotly_chart(fig, use_container_width=True)
+            except:
+                pass
     
     # Schema information
     with st.expander("View Database Schema"):
