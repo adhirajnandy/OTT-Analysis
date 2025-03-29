@@ -12,7 +12,7 @@ load_dotenv()
 
 # Neo4j connection details
 URI = os.getenv("NEO4J_URI")
-USER = os.getenv("NEO4J_USERNAME")
+USER = os.getenv("NEO4J_USER")
 PASSWORD = os.getenv("NEO4J_PASSWORD")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
@@ -39,7 +39,16 @@ class Neo4jConnection:
     def query(self, query, params=None):
         with self.driver.session() as session:
             result = session.run(query, params or {})
-            return [dict(record) for record in result]
+            records = []
+            for record in result:
+                record_dict = {}
+                for key, value in record.items():
+                    if hasattr(value, 'items'):  # If it's a Node or Relationship
+                        record_dict[key] = dict(value.items())
+                    else:
+                        record_dict[key] = value
+                records.append(record_dict)
+            return records
 
 def clean_cypher_query(query):
     # Remove markdown code block syntax
@@ -62,6 +71,12 @@ def generate_cypher_query(user_input):
       - (Movie/TVShow)-[:RELEASED_IN]->(Country)
       - (Movie/TVShow)-[:BELONGS_TO_GENRE]->(Genre)
     
+    Important: Return ONLY the specific properties needed to answer the question. For example:
+    - For movies: RETURN m.title, m.release_year, m.rating, m.duration
+    - For actors/directors: RETURN a.name
+    - For genres: RETURN g.name
+    - For countries: RETURN c.name
+    
     Return only the Cypher query without any explanation or markdown formatting.
     """
     
@@ -73,7 +88,7 @@ def generate_cypher_query(user_input):
             return "Error: No response generated"
     except Exception as e:
         st.error(f"Error with Gemini API: {str(e)}")
-        return "MATCH (m:Movie) RETURN m LIMIT 5"  # Fallback query
+        return "MATCH (m:Movie) RETURN m.title, m.release_year LIMIT 5"  # Fallback query
 
 def execute_query(cypher_query, neo4j):
     try:

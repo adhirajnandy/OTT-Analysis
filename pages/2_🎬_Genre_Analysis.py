@@ -11,7 +11,7 @@ load_dotenv()
 
 # Neo4j connection details
 URI = os.getenv("NEO4J_URI")
-USER = os.getenv("NEO4J_USERNAME")
+USER = os.getenv("NEO4J_USER")
 PASSWORD = os.getenv("NEO4J_PASSWORD")
 
 class Neo4jConnection:
@@ -24,7 +24,16 @@ class Neo4jConnection:
     def query(self, query, params=None):
         with self.driver.session() as session:
             result = session.run(query, params or {})
-            return [dict(record) for record in result]
+            records = []
+            for record in result:
+                record_dict = {}
+                for key, value in record.items():
+                    if hasattr(value, 'items'):  # If it's a Node or Relationship
+                        record_dict[key] = dict(value.items())
+                    else:
+                        record_dict[key] = value
+                records.append(record_dict)
+            return records
 
 def main():
     st.title("🎬 Genre Analysis")
@@ -62,8 +71,11 @@ def main():
     combo_data = neo4j.query(combo_query)
     combo_df = pd.DataFrame(combo_data)
     
+    # Convert genres list to string for visualization
+    combo_df['genres_str'] = combo_df['genres'].apply(lambda x: ' > '.join(x))
+    
     # Create sunburst chart
-    fig = px.sunburst(combo_df, path=['genres'], values='count',
+    fig = px.sunburst(combo_df, path=['genres_str'], values='count',
                       title='Genre Combinations (Sunburst)')
     st.plotly_chart(fig, use_container_width=True)
     

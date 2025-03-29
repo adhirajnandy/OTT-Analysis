@@ -11,7 +11,7 @@ load_dotenv()
 
 # Neo4j connection details
 URI = os.getenv("NEO4J_URI")
-USER = os.getenv("NEO4J_USERNAME")
+USER = os.getenv("NEO4J_USER")
 PASSWORD = os.getenv("NEO4J_PASSWORD")
 
 class Neo4jConnection:
