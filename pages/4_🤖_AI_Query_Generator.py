@@ -32,34 +32,15 @@ model = genai.GenerativeModel('gemini-1.5-pro')
 
 class Neo4jConnection:
     def __init__(self):
-        try:
-            # Create driver with proper configuration
-            self.driver = GraphDatabase.driver(
-                URI,
-                auth=(USER, PASSWORD),
-                max_connection_lifetime=300,  # 5 minutes
-                max_connection_pool_size=50,
-                connection_timeout=5,
-                keep_alive=True
-            )
-            # Verify connectivity
-            self.driver.verify_connectivity()
-        except Exception as e:
-            st.error(f"Failed to initialize Neo4j driver: {str(e)}")
-            raise
+        self.driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
     
     def close(self):
-        if hasattr(self, 'driver'):
-            self.driver.close()
+        self.driver.close()
     
     def query(self, query, params=None):
-        try:
-            with self.driver.session() as session:
-                result = session.run(query, params or {})
-                return [dict(record) for record in result]
-        except Exception as e:
-            st.error(f"Query execution error: {str(e)}")
-            return []
+        with self.driver.session() as session:
+            result = session.run(query, params or {})
+            return [dict(record) for record in result]
 
 def clean_cypher_query(query):
     # Remove markdown code block syntax
