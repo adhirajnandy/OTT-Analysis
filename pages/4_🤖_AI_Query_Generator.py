@@ -139,12 +139,7 @@ def main():
     example_queries = [
         "Show me all movies directed by Christopher Nolan",
         "Find actors who worked with Tom Cruise",
-        "List all action movies released in 2020",
-        "Show me the most popular genres in India",
         "Find directors who worked with multiple actors",
-        "What are the highest rated movies from 2023?",
-        "Show me movies that combine Action and Drama genres",
-        "Which actors have worked with the most directors?",
         "What are the most common genre combinations?",
         "Find movies released in multiple countries"
     ]
@@ -180,9 +175,12 @@ def main():
                 st.session_state.query_results = execute_query(st.session_state.generated_query, neo4j)
     
     # Display results
-    if not st.session_state.query_results.empty:
+    if st.session_state.query_results is not None:
         st.subheader("Results:")
-        st.dataframe(st.session_state.query_results)
+        if st.session_state.query_results.empty:
+            st.warning("No records found for this query. Try modifying your question or using a different example query.")
+        else:
+            st.dataframe(st.session_state.query_results)
         
         # Try to create a visualization if possible
         if len(st.session_state.query_results.columns) >= 2:
