@@ -134,7 +134,6 @@ sequenceDiagram
 - Environment variables for sensitive data
 - Secure Neo4j connection
 - API key management
-- Input validation and sanitization
 
 ## Dependencies
 - Python 3.x
@@ -145,25 +144,5 @@ sequenceDiagram
 - Google Generative AI
 - python-dotenv
 
-## Error Handling
-- Database connection management
-- Query execution error handling
-- AI model fallback mechanisms
-- User input validation
-- Data processing error handling
 
-## Performance Considerations
-- Query optimization
-- Connection pooling
-- Result set limiting
-- Caching mechanisms
-- Efficient data structures
 
-## Future Enhancements
-1. Additional visualization types
-2. Enhanced AI query capabilities
-3. Real-time data updates
-4. User authentication
-5. Advanced analytics features
-6. Export functionality
-7. Custom visualization options 
