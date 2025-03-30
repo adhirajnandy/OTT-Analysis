@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 import google.generativeai as genai
 from datetime import datetime
 import re
+import plotly.express as px
+import plotly.graph_objects as go
 
 # Load environment variables
 load_dotenv()
@@ -113,11 +115,9 @@ def main():
     example_queries = [
         "Show me all movies directed by Christopher Nolan",
         "Find actors who worked with Tom Cruise",
-
         "Find directors who worked with multiple actors",
         "What are the most common genre combinations?",
         "Find movies released in multiple countries"
-
     ]
     
     for query in example_queries:
@@ -156,17 +156,42 @@ def main():
         if st.session_state.query_results.empty:
             st.warning("No records found for this query. Try modifying your question or using a different example query.")
         else:
+            # Display the table
             st.dataframe(st.session_state.query_results)
-        
-        # Try to create a visualization if possible
-        if len(st.session_state.query_results.columns) >= 2:
-            try:
-                fig = px.bar(st.session_state.query_results, 
-                           x=st.session_state.query_results.columns[0],
-                           y=st.session_state.query_results.columns[1])
-                st.plotly_chart(fig, use_container_width=True)
-            except:
-                pass
+            
+            # Create visualization if possible
+            if len(st.session_state.query_results.columns) >= 2:
+                # If we have numeric data, create a bar chart
+                if st.session_state.query_results[st.session_state.query_results.columns[1]].dtype in ['int64', 'float64']:
+                    fig = px.bar(st.session_state.query_results, 
+                               x=st.session_state.query_results.columns[0],
+                               y=st.session_state.query_results.columns[1],
+                               title=f"{st.session_state.query_results.columns[1]} by {st.session_state.query_results.columns[0]}")
+                    st.plotly_chart(fig, use_container_width=True)
+                
+                # If we have categorical data, create a pie chart
+                elif st.session_state.query_results[st.session_state.query_results.columns[1]].dtype == 'object' and len(st.session_state.query_results) <= 10:
+                    fig = px.pie(st.session_state.query_results, 
+                               names=st.session_state.query_results.columns[0],
+                               values=st.session_state.query_results.columns[1] if st.session_state.query_results[st.session_state.query_results.columns[1]].dtype in ['int64', 'float64'] else None,
+                               title=f"Distribution of {st.session_state.query_results.columns[0]}")
+                    st.plotly_chart(fig, use_container_width=True)
+                
+                # If we have time series data, create a line chart
+                elif 'year' in st.session_state.query_results.columns[0].lower() or 'date' in st.session_state.query_results.columns[0].lower():
+                    fig = px.line(st.session_state.query_results, 
+                                x=st.session_state.query_results.columns[0],
+                                y=st.session_state.query_results.columns[1],
+                                title=f"{st.session_state.query_results.columns[1]} over {st.session_state.query_results.columns[0]}")
+                    st.plotly_chart(fig, use_container_width=True)
+                
+                # For other cases, create a scatter plot
+                else:
+                    fig = px.scatter(st.session_state.query_results, 
+                                   x=st.session_state.query_results.columns[0],
+                                   y=st.session_state.query_results.columns[1],
+                                   title=f"{st.session_state.query_results.columns[1]} vs {st.session_state.query_results.columns[0]}")
+                    st.plotly_chart(fig, use_container_width=True)
     
     # Schema information
     with st.expander("View Database Schema"):
