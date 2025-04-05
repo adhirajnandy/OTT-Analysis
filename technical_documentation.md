@@ -9,8 +9,7 @@
 6. [Security](#6-security)
 7. [Performance Optimization](#7-performance-optimization)
 8. [Deployment Guide](#8-deployment-guide)
-9. [Testing](#9-testing)
-10. [Maintenance](#10-maintenance)
+
 
 ## 1. System Architecture
 
@@ -253,68 +252,3 @@ pip install -r requirements.txt
 streamlit run Home.py
 ```
 
-## 9. Testing
-
-### 9.1 Unit Tests
-```python
-def test_similarity_score():
-    # Test similarity score calculation
-    pass
-
-def test_database_connection():
-    # Test database connectivity
-    pass
-```
-
-### 9.2 Integration Tests
-- End-to-end workflow testing
-- Database operation testing
-- UI component testing
-
-## 10. Maintenance
-
-### 10.1 Regular Tasks
-- Database backup
-- Index maintenance
-- Performance monitoring
-- Error log review
-
-### 10.2 Updates
-- Dependency updates
-- Security patches
-- Feature additions
-- Bug fixes
-
-## Appendix
-
-### A. Common Issues and Solutions
-1. Database Connection Issues
-   - Check Neo4j service status
-   - Verify credentials
-   - Check network connectivity
-
-2. Performance Issues
-   - Optimize queries
-   - Check indexes
-   - Monitor resource usage
-
-3. UI Issues
-   - Clear browser cache
-   - Check Streamlit version
-   - Verify data integrity
-
-### B. Best Practices
-1. Code Style
-   - Follow PEP 8
-   - Use type hints
-   - Write docstrings
-
-2. Database
-   - Use parameterized queries
-   - Create appropriate indexes
-   - Regular maintenance
-
-3. UI/UX
-   - Responsive design
-   - Clear error messages
-   - Intuitive navigation 
